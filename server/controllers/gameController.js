@@ -8,18 +8,29 @@ const Category = require('../models/Category');
 
 exports.homepage = async(req, res) => {
 
-    res.render('index', {title: 'Node games - home'});
+    
+    try {
+
+        const limitNumber = 5;
+        const categories = await Category.find({}).limit(limitNumber);
+        res.render('index', { title: 'Node games - home', categories });    
+        
+    } catch (error) {
+        res.status(500).send({message: error.message || "error ocurred"});
+    }
+
+
+
+
 }
 
-/**
- * Dummy data
- */
 
 
 
 
 
 
+/*
 async function insertDummyCategoryData() {
     
     try {
@@ -54,3 +65,4 @@ async function insertDummyCategoryData() {
     }
 }
 insertDummyCategoryData();
+*/
