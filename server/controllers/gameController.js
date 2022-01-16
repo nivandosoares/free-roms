@@ -1,106 +1,151 @@
-require('../models/database');
-const Category = require('../models/Category');
-const Game = require('../models/Game');
+require("../models/database");
+const Category = require("../models/Category");
+const Game = require("../models/Game");
 
 /**
  * GET /
  * Homepage
  */
 
-exports.homepage = async(req, res) => {
-    try {
+exports.homepage = async (req, res) => {
+  try {
+    const limitNumber = 5;
+    const categories = await Category.find({}).limit(limitNumber);
+    const latest = await Game.find({}).sort({ _id: -1 }).limit(limitNumber);
 
-        const limitNumber = 5;
-        const categories = await Category.find({}).limit(limitNumber);
-        const latest = await Game.find({}).sort({_id: -1}).limit(limitNumber); 
-    
-        const Games = {latest}
-        
-        res.render('index', { title: 'Node games - home', categories, Games });    
-        
-    } catch (error) {
-        res.status(500).send({message: error.message || "error ocurred"});
+    const Games = { latest };
+
+    res.render("index", { title: "Node games - home", categories, Games });
+  } catch (error) {
+    res.status(500).send({ message: error.message || "error ocurred" });
+  }
+};
+
+exports.exploreCategories = async (req, res) => {
+  try {
+    const limitNumber = 20;
+    const categories = await Category.find({}).limit(limitNumber);
+    res.render("categories", { title: "Node games - Categories", categories });
+  } catch (error) {
+    res.status(500).send({ message: error.message || "error ocurred" });
+  }
+};
+
+exports.exploreCategoriesById = async (req, res) => {
+  try {
+    let categoryId = req.params.id;
+
+    const limitNumber = 20;
+    const categoryById = await Game.find({ category: categoryId }).limit(
+      limitNumber
+    );
+    res.render("categories", {
+      title: "Node games - Categories",
+      categoryById,
+    });
+  } catch (error) {
+    res.status(500).send({ message: error.message || "error ocurred" });
+  }
+};
+
+exports.exploreGame = async (req, res) => {
+  try {
+    let gameId = req.params.id;
+
+    const game = await Game.findById(gameId);
+    res.render("game", { title: "Node games - Game", game });
+  } catch (error) {
+    res.status(500).send({ message: error.message || "error ocurred" });
+  }
+};
+
+exports.exploreRandom = async (req, res) => {
+  try {
+    let count = await Game.find().countDocuments();
+    let random = Math.floor(Math.random() * count);
+    let game = await Game.findOne().skip(random).exec();
+    res.render("explore-random", { title: "Free Roms - Random", game });
+  } catch (error) {
+    res.satus(500).send({ message: error.message || "Error Occured" });
+  }
+};
+
+/**
+ * GET
+ */
+exports.submitGame = async (req, res) => {
+  const infoErrorsObj = req.flash("infoErrors");
+  const infoSubmitObj = req.flash("infoSubmit");
+  res.render("submit-game", {
+    title: "Free Roms - Submit Game",
+    infoErrorsObj,
+    infoSubmitObj,
+  });
+};
+
+/**
+ * POST /submit-recipe
+ * Submit Recipe
+ */
+exports.submitGameOnPost = async (req, res) => {
+  try {
+    let imageUploadFile;
+    let uploadPath;
+    let newImageName;
+
+    if (!req.files || Object.keys(req.files).length === 0) {
+      console.log("No Files where uploaded.");
+    } else {
+      imageUploadFile = req.files.image;
+      newImageName = Date.now() + imageUploadFile.name;
+
+      uploadPath =
+        require("path").resolve("./") + "/public/uploads/" + newImageName;
+
+      imageUploadFile.mv(uploadPath, function (err) {
+        if (err) return res.satus(500).send(err);
+      });
     }
 
-}
+    const newGame = new Game({
+      name: req.body.name,
+      description: req.body.description,
+      shared_by: req.body.shared_by,
+      category: req.body.category,
+      image: newImageName,
+    });
 
+    await newGame.save();
 
-
-
-exports.exploreCategories = async(req, res) => {
-    try {
-
-        const limitNumber = 20;
-        const categories = await Category.find({}).limit(limitNumber);
-        res.render('categories', { title: 'Node games - Categories', categories });    
-        
-    } catch (error) {
-        res.status(500).send({message: error.message || "error ocurred"});
-    }
-
-}
-
-
-exports.exploreCategoriesById = async(req, res) => {
-    try {
-
-        let categoryId = req.params.id;
-
-        const limitNumber = 20;
-        const categoryById = await Game.find({'category': categoryId}).limit(limitNumber);
-        res.render('categories', { title: 'Node games - Categories', categoryById });    
-        
-    } catch (error) {
-        res.status(500).send({message: error.message || "error ocurred"});
-    }
-
-}
-
-
-exports.exploreGame = async(req, res) => {
-    try {
-
-        let gameId = req.params.id;
-
-        const game = await Game.findById(gameId);
-        res.render('game', { title: 'Node games - Game', game });    
-        
-    } catch (error) {
-        res.status(500).send({message: error.message || "error ocurred"});
-    }
-
-}
-
+    req.flash("infoSubmit", "game has been added.");
+    res.redirect("/submit-game");
+  } catch (error) {
+    // res.json(error);
+    req.flash("infoErrors", error);
+    res.redirect("/submit-game");
+  }
+};
 
 exports.searchGame = async (req, res) => {
-    try {
-    
-        let searchTerm = req.body.searchTerm;
+  try {
+    let searchTerm = req.body.searchTerm;
 
-        let game = await Game.find({$text: {$search: searchTerm, $diacriticSensitive: true}})
-        res.render('search', { title: 'Free Roms - Search', game });
-    } catch (error) {
-        
-}
+    let game = await Game.find({
+      $text: { $search: searchTerm, $diacriticSensitive: true },
+    });
+    res.render("search", { title: "Free Roms - Search", game });
+  } catch (error) {}
+};
 
-
-
-}
-
-
-exports.exploreLatest = async(req, res) => {
-    try {
-        const limitNumber = 20;
-        const Games = await Game.find({}).sort({ _id: -1 }).limit(limitNumber);
-        res.render('explore-latest', { title: 'Node games - Game', Games });    
-        
-    } catch (error) {
-        res.status(500).send({message: error.message || "error ocurred"});
-    }
-
-}
-
-
+exports.exploreLatest = async (req, res) => {
+  try {
+    const limitNumber = 20;
+    const Games = await Game.find({}).sort({ _id: -1 }).limit(limitNumber);
+    res.render("explore-latest", { title: "Node games - Game", Games });
+  } catch (error) {
+    res.status(500).send({ message: error.message || "error ocurred" });
+  }
+};
 
 /*
 
