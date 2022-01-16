@@ -1,0 +1,37 @@
+<% if (game != null){ %> 
+
+    <nav aria-label="breadcrumb">
+        <ol class = "breadcrumb">
+            <li class = "breadcrumb-item"><a href = "/">Home</a></li>
+            <li class = "breadcrumb-item active" aria-current="page"><%- game.name %> </li>
+        </ol>
+    </nav>
+
+    <div class = "row">
+        <div class = "col-12 col-md-4">
+            <img src = "/uploads/<%- game.image  %>" class = "img-fluid sticky-top" style="top: 20px;" alt="<%- game.name %>" loading = "lazy">
+        </div>
+
+        <div class = "col-12 col-md-8">
+            <div class = "col-12"><h1><%- game.name  %> </h1></div>
+            <div class = "col-12 mb-4"><i class="fas fa-tag"></i> <%- game.category%> </div>
+            <div class = "col-12" style="white-space: pre-line;">
+                <h4>About</h4>
+                <%- game.description %>
+                
+                 
+            </div>
+            <div class = "col-12" style="white-space: pre-line;">
+                <h4>send by</h4>
+                <%- game.shared_by  %>
+                
+                 
+            </div>
+           
+        </div>
+
+        <div class = "d-grid gap-2 d-sm-flex justify-content-sm-center">
+            <a href = "/submit-game" class = "btn btn-primary btn-dark btn-lg">Download</a>
+        </div>
+    </div>
+<% } %> 
