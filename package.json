@@ -6,8 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node app.js",
-    "heroku-prebuild": "npm install -f",
-    "heroku-postbuild": "npm run prod"
+    "heroku-prebuild": "npm install -f"
   },
   "keywords": [],
   "author": "",
