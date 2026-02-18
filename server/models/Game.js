@@ -26,5 +26,4 @@ const GameSchema = new mongoose.Schema({
 });
 
 GameSchema.index({ name: 'text', description: 'text' });
-GameSchema.index({"$**": 'text'});
 module.exports = mongoose.model('Game', GameSchema);
