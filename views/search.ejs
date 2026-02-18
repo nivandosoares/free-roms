@@ -1,19 +1,16 @@
-<h1 class = "pb-4">Search results</h1>
+<h1 class="pb-4">Search results</h1>
 
-<div class = "row row-cols-2 row-cols-lg-5 g-2 g-lg-3">
-    <% if (game != ''){ %>
-        <%game.forEach(function(game, index){ %>  
-        <a href = "/game/<%-game._id%>" class = "col-text-center category__link">
-            <div class = "category__img category__img--large shadow">
-                <img src="/uploads/<%-game.image%>" alt="<%-game.name%>" loading = "lazy">
-            </div>
-            <div class = "pt-1"><%-game.name%></div>
-        </a>
-
-        <% }) %> 
-    <% } else { %> 
-        <p>No items found.</p>
-    <% } %> 
-
-
-    </div>
+<div class="row row-cols-2 row-cols-lg-5 g-2 g-lg-3">
+  <% if (Array.isArray(game) && game.length > 0){ %>
+    <% game.forEach(function(item){ %>
+      <a href="/game/<%- item._id %>" class="col text-center category__link">
+        <div class="category__img category__img--large shadow">
+          <img src="/uploads/<%- item.image %>" alt="<%- item.name %>" loading="lazy">
+        </div>
+        <div class="pt-1"><%- item.name %></div>
+      </a>
+    <% }) %>
+  <% } else { %>
+    <p>No items found.</p>
+  <% } %>
+</div>
