@@ -11,6 +11,7 @@ router.get("/about", gameController.aboutPage);
 router.get("/contact", gameController.contactPage);
 router.get("/faq", gameController.faqPage);
 router.get("/game/:id", gameController.exploreGame);
+router.get("/download/:id", gameController.downloadGame);
 router.get("/categories", gameController.exploreCategories);
 router.get("/categories/:id", gameController.exploreCategoriesById);
 router.post("/search", gameController.searchGame);

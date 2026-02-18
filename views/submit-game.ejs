@@ -30,6 +30,7 @@
         <div class="col-12">
           <label for="name" class="form-label">Game Title</label>
           <input type="text" name="name" id="name" class="form-control" required />
+          <small class="text-muted">If you do not upload a cover, we try to fetch one by game name automatically.</small>
         </div>
 
         <div class="col-12">
@@ -58,7 +59,19 @@
         </div>
 
         <div class="col-12">
-          <label for="image">Game Cover</label>
+          <label for="romFile">ROM File</label>
+          <input
+            type="file"
+            class="form-control"
+            name="romFile"
+            id="romFile"
+            accept=".zip,.rar,.7z,.iso,.bin,.cue,.rom,.nes,.sfc,.smc,.gba,.gb,.gbc,.md,.gen,.n64,.z64"
+            required
+          />
+        </div>
+
+        <div class="col-12">
+          <label for="image">Game Cover (optional)</label>
           <input
             type="file"
             class="form-control"

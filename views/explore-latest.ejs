@@ -5,7 +5,7 @@
     <% Games.forEach(function(game){ %>
       <a href="/game/<%- game._id %>" class="col text-center category__link">
         <div class="category__img category__img--large shadow">
-          <img src="/uploads/<%- game.image %>" alt="<%- game.name %>" loading="lazy" />
+          <img src="<%= game.image && game.image.startsWith('http') ? game.image : `/uploads/${game.image}` %>" alt="<%- game.name %>" loading="lazy" />
         </div>
         <div class="pt-1"><%- game.name %></div>
       </a>

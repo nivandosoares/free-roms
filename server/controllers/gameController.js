@@ -1,8 +1,75 @@
 const path = require("path");
+const https = require("https");
 
 require("../models/database");
 const Category = require("../models/Category");
 const Game = require("../models/Game");
+
+const COVER_PLACEHOLDER = "placeholder-cover.svg";
+
+const sanitizeFileName = (value = "") =>
+  String(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9.-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+
+const fetchJson = (url) =>
+  new Promise((resolve, reject) => {
+    const req = https.get(
+      url,
+      {
+        headers: {
+          "User-Agent": "free-roms-app/1.0",
+          Accept: "application/json",
+        },
+      },
+      (res) => {
+        if (res.statusCode !== 200) {
+          res.resume();
+          reject(new Error(`Request failed with status ${res.statusCode}`));
+          return;
+        }
+
+        let rawData = "";
+        res.on("data", (chunk) => {
+          rawData += chunk;
+        });
+
+        res.on("end", () => {
+          try {
+            resolve(JSON.parse(rawData));
+          } catch (error) {
+            reject(error);
+          }
+        });
+      }
+    );
+
+    req.on("error", reject);
+    req.setTimeout(4000, () => req.destroy(new Error("Request timeout")));
+  });
+
+const resolveCoverFromGameName = async (gameName) => {
+  try {
+    const normalizedName = encodeURIComponent((gameName || "").trim());
+    if (!normalizedName) {
+      return COVER_PLACEHOLDER;
+    }
+
+    const data = await fetchJson(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${normalizedName}`
+    );
+
+    if (data && data.thumbnail && data.thumbnail.source) {
+      return data.thumbnail.source;
+    }
+
+    return COVER_PLACEHOLDER;
+  } catch (error) {
+    return COVER_PLACEHOLDER;
+  }
+};
 
 /**
  * GET /
@@ -78,6 +145,38 @@ exports.exploreGame = async (req, res) => {
   }
 };
 
+exports.downloadGame = async (req, res) => {
+  try {
+    const game = await Game.findById(req.params.id);
+    if (!game) {
+      return res.status(404).send({ message: "Game not found" });
+    }
+
+    if (!game.romFile) {
+      return res.status(404).send({ message: "ROM file not available" });
+    }
+
+    const romPath = path.join(process.cwd(), "public", "roms", game.romFile);
+
+    res.download(romPath, game.romFile, async (error) => {
+      if (error) {
+        if (!res.headersSent) {
+          res.status(500).send({ message: "Could not start download" });
+        }
+        return;
+      }
+
+      try {
+        await Game.findByIdAndUpdate(game._id, { $inc: { downloadCount: 1 } });
+      } catch (updateError) {
+        console.error(updateError);
+      }
+    });
+  } catch (error) {
+    res.status(500).send({ message: error.message || "error occurred" });
+  }
+};
+
 exports.exploreRandom = async (req, res) => {
   try {
     const count = await Game.countDocuments();
@@ -108,31 +207,40 @@ exports.submitGame = async (req, res) => {
 
 exports.submitGameOnPost = async (req, res) => {
   try {
-    let newImageName;
+    let imageName = COVER_PLACEHOLDER;
 
-    if (!req.files || Object.keys(req.files).length === 0 || !req.files.image) {
-      req.flash("infoErrors", "Image file is required.");
+    if (!req.files || Object.keys(req.files).length === 0 || !req.files.romFile) {
+      req.flash("infoErrors", "ROM file is required.");
       return res.redirect("/submit-game");
     }
 
-    const imageUploadFile = req.files.image;
-    newImageName = `${Date.now()}-${imageUploadFile.name}`;
+    const gameName = (req.body.name || "").trim();
+    const nameSlug = sanitizeFileName(gameName || "game-rom");
 
-    const uploadPath = path.join(
-      process.cwd(),
-      "public",
-      "uploads",
-      newImageName
-    );
+    const romUploadFile = req.files.romFile;
+    const romFileName = `${Date.now()}-${nameSlug}-${sanitizeFileName(
+      romUploadFile.name
+    )}`;
+    const romPath = path.join(process.cwd(), "public", "roms", romFileName);
 
-    await imageUploadFile.mv(uploadPath);
+    await romUploadFile.mv(romPath);
+
+    if (req.files.image) {
+      const imageUploadFile = req.files.image;
+      imageName = `${Date.now()}-${sanitizeFileName(imageUploadFile.name)}`;
+      const imagePath = path.join(process.cwd(), "public", "uploads", imageName);
+      await imageUploadFile.mv(imagePath);
+    } else {
+      imageName = await resolveCoverFromGameName(gameName);
+    }
 
     const newGame = new Game({
-      name: req.body.name,
+      name: gameName,
       description: req.body.description,
       shared_by: req.body.shared_by || "Anonymous",
       category: req.body.category,
-      image: newImageName,
+      image: imageName,
+      romFile: romFileName,
     });
 
     await newGame.save();

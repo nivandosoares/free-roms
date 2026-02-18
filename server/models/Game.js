@@ -21,8 +21,16 @@ const GameSchema = new mongoose.Schema({
     image: {
         type: String,
         required : "this field is required"
+    },
+    romFile: {
+        type: String,
+        required : "this field is required"
+    },
+    downloadCount: {
+        type: Number,
+        default: 0
     }
-    
+
 });
 
 GameSchema.index({ name: 'text', description: 'text' });

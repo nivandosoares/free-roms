@@ -25,6 +25,8 @@ A complete CRUD with classic ROMS modeling over MongoDB database using Node JS e
 - file upload size limit to avoid oversized uploads
 - better controller error handling for empty random query, missing game, and invalid search
 - new informational pages: About, Contact, FAQ, and dedicated 404 page
+- ROM file upload + download route with download counter
+- automatic cover lookup from game name with placeholder fallback
 - input validation for missing uploaded image when submitting a game
 - cleanup of duplicate MongoDB text index definition
 
